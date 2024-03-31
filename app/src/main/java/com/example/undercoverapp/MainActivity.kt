@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -153,7 +152,7 @@ class MainActivity : ComponentActivity() {
 
                                 if (isInGame){
                                     Button(onClick = { showWord = true }) {
-                                        Text(text = "Voir ton mot")
+                                        Text(text = "Voir ton mot", color = Color.White)
                                     }
                                 }
                                 
@@ -172,12 +171,9 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                Button(onClick = { showEject = true }, enabled = isInGame,
-                                    colors = ButtonDefaults.buttonColors(
-                                        contentColor = if (isInGame) Color.White else Color.Black
-                                    )
-                                    ) {
-                                    Text(text = if (isInGame) "Virer" else person.role)
+                                Button(onClick = { showEject = true }, enabled = isInGame) {
+                                    Text(text = if (isInGame) "Virer" else person.role,
+                                        color = if (isInGame) Color.White else Color.Black)
                                 }
 
                                 if (showEject){
