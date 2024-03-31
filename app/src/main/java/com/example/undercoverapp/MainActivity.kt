@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
@@ -104,7 +106,9 @@ class MainActivity : ComponentActivity() {
                             onValueChange = {
                                 text -> textFieldName = text
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            textStyle = TextStyle(color = Color.Black)
+
                         )
                         Button(onClick = {
                             if(textFieldName.isNotBlank()){
@@ -168,7 +172,11 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                Button(onClick = { showEject = true }, enabled = isInGame) {
+                                Button(onClick = { showEject = true }, enabled = isInGame,
+                                    colors = ButtonDefaults.buttonColors(
+                                        contentColor = if (isInGame) Color.White else Color.Black
+                                    )
+                                    ) {
                                     Text(text = if (isInGame) "Virer" else person.role)
                                 }
 
