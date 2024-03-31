@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
@@ -67,24 +64,29 @@ class MainActivity : ComponentActivity() {
                 var imposterCount by remember { mutableIntStateOf(0) }
                 var mrWhiteCount by remember { mutableIntStateOf(0) }
 
+
                 fun startGame(){
 
-                    people.forEach { it.isInGame = true }
-
+                    // fernano exists solely to modify the people list to trigger a recompose in the people LazyColumn. DO NOT REMOVE FERNANO
                     val tempPeople = people.shuffled()
+                    val fernano = Person("Fernano", INNOCENT, true)
+                    people = people + fernano
                     for (person in tempPeople.subList(0, innocentCount)) {
+                        person.isInGame = true
                         person.role = INNOCENT
                     }
-                    for (person in tempPeople.subList(innocentCount, imposterCount)){
+                    for (person in tempPeople.subList(innocentCount, innocentCount + imposterCount)){
+                        person.isInGame = true
                         person.role = IMPOSTER
                     }
-                    for (person in tempPeople.subList(imposterCount, tempPeople.size)){
+                    for (person in tempPeople.subList(innocentCount + imposterCount, tempPeople.size)){
+                        person.isInGame = true
                         person.role = MRWHITE
                     }
                     val wordPair = pairPicker(wordsList)
                     innocentWord = wordPair.first
                     imposterWord = wordPair.second
-                    
+                    people = people - fernano
                 }
 
                 Column(
@@ -101,14 +103,16 @@ class MainActivity : ComponentActivity() {
                             value = textFieldName,
                             onValueChange = {
                                 text -> textFieldName = text
-                            }
+                            },
+                            modifier = Modifier.weight(1f)
                         )
                         Button(onClick = {
                             if(textFieldName.isNotBlank()){
                                 people = people + (Person(name = textFieldName))
-                                textFieldName = ""
-                            }
-                        }) {
+                                textFieldName = "" }
+                                         },
+                            modifier = Modifier.weight(0.8f)
+                            ) {
                             Text(text = "Ajouter")
                         }
                     }
@@ -125,9 +129,10 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ){
-                                
+
                                 var showWord by remember { mutableStateOf(false) }
                                 var showEject by remember { mutableStateOf(false)}
+                                val isInGame = person.isInGame
                                 
                                 OutlinedButton(onClick = {
                                     people = people - person
@@ -140,8 +145,12 @@ class MainActivity : ComponentActivity() {
                                         .align(Alignment.CenterVertically)
                                         .weight(1f)
                                 )
-                                Button(onClick = { showWord = true }) {
-                                    Text(text = "Voir ton mot")
+                                Log.d("in game?", "${person.name} is in game: $isInGame")
+
+                                if (isInGame){
+                                    Button(onClick = { showWord = true }) {
+                                        Text(text = "Voir ton mot")
+                                    }
                                 }
                                 
                                 if (showWord) {
@@ -159,8 +168,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                Button(onClick = { showEject = true }, enabled = person.isInGame) {
-                                    Text(text = if (person.isInGame ) "Virer" else person.role)
+                                Button(onClick = { showEject = true }, enabled = isInGame) {
+                                    Text(text = if (isInGame) "Virer" else person.role)
                                 }
 
                                 if (showEject){
@@ -191,7 +200,6 @@ class MainActivity : ComponentActivity() {
                         var showDialogAddWords by remember { mutableStateOf(false) }
                         var showDialogStartGame by remember { mutableStateOf(false) }
                         var wordsListValue by remember { mutableStateOf(wordsList) }
-                        val defaultWordsListValue = wordsList
                         var isUsableList by remember { mutableStateOf(isListUsable(wordsListValue)) }
 
                         Button(onClick = { showDialogAddWords = true}) {
@@ -220,7 +228,7 @@ class MainActivity : ComponentActivity() {
                                                             isUsableList = isListUsable(wordsListValue)
                                                             },
                                             modifier = Modifier
-                                                .fillMaxSize(0.9f)
+                                                .weight(1f)
                                                 .align(Alignment.CenterHorizontally)
                                                 .padding(8.dp)
                                             )
@@ -228,6 +236,7 @@ class MainActivity : ComponentActivity() {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
+                                                .weight(0.3f)
                                         ) {
                                             Button(onClick = {
                                                 if (isListUsable(wordsListValue)) {
@@ -236,8 +245,8 @@ class MainActivity : ComponentActivity() {
                                                        apply()
                                                     }
                                                 }
-                                                else{
-                                                    wordsListValue = defaultWordsListValue
+                                                else {
+                                                    wordsListValue = wordsList
                                                 }
                                                 showDialogAddWords = false
                                             },
@@ -257,15 +266,6 @@ class MainActivity : ComponentActivity() {
                         
                         Button(onClick = { showDialogStartGame = true}) {
                             Text(text = "Lancer une partie!")
-                        }
-
-                        // testing
-                        if (false){
-                            Dialog(onDismissRequest = { showDialogStartGame = false }) {
-                                Card {
-                                    ButtonWithTextField()
-                                }
-                            }
                         }
 
                         if (showDialogStartGame){
@@ -331,36 +331,6 @@ fun NumberPicker(label: String, maxValue: Int, numberPicked:(Int) -> Unit){
     }
 }
 
-@Composable
-fun ButtonWithTextField() {
-    var text by remember { mutableStateOf(TextFieldValue()) }
-    var isButtonEnabled by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.padding(16.dp)
-    ) {
-        TextField(
-            value = text,
-            onValueChange = {
-                text = it
-                // Enable the button only when the text is not empty
-                isButtonEnabled = it.text.isNotEmpty()
-            },
-            label = { Text("Enter text") },
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        Button(
-            onClick = {
-                // Handle button click action
-            },
-            enabled = isButtonEnabled
-        ) {
-            Text("Submit")
-        }
-    }
-}
-
 fun pairPicker(wordsList: String): Pair<String, String> {
     var words: List<String> = mutableListOf()
     wordsList.split("\n").map { line ->
@@ -386,6 +356,6 @@ fun isListUsable(wordsList: String): Boolean {
         if (parts.size != 2){ return false }
         if (parts[0].isBlank() or parts[1].isBlank()){ return false }
     }
-    lines.forEach { Log.d("this bitch", it )}
     return true
 }
+
